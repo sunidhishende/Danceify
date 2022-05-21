@@ -3,7 +3,9 @@ import * as tf from '@tensorflow/tfjs';
 import React, { useRef,useState,useEffect } from 'react';
 import backend from '@tensorflow/tfjs-backend-webgl';
 import Webcam from 'react-webcam';
-import ReactPlayer from 'react-player'
+import ReactPlayer from 'react-player';
+
+
 
 const POINTS = {
   NOSE : 0,
@@ -59,30 +61,24 @@ let skeletonColor = 'rgb(255,255,255)'
 let interval
 
 function Start() {
+  const data= require('../actualgradients.json')
+  var count=0
   const [playing, setPlaying]=useState(false);
-  const[coords,setCoords]=useState([]);
+  // const[coords,setCoords]=useState([]);
+ 
   const webcamRef = useRef(null)
   const canvasRef = useRef(null)
   const runMovenet = async () => {
     const detectorConfig = {modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER};
     const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
     interval = setInterval(() => { 
-        detectPose(detector)
-    }, 1000)
+      detectPose(detector)   
+      if(count==1){
+        setPlaying(true)}
+        else if (count==100){
+          setPlaying(false)}
+    }, 100)
   }
-  useEffect(()=>{
-      if(coords.length==1){
-        setPlaying(true)
-        console.log(playing)
-        console.log(coords)
-      }
-      else if (coords.length==100){
-        setPlaying(false)
-        
-        //to be done here- send data for final score and display final score and clear coords and stop interval in movenet
-
-      }
-  })
   const detectPose = async (detector) => {
     if (
       typeof webcamRef.current !== "undefined" &&
@@ -95,16 +91,11 @@ function Start() {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       try {
         const keypoints = pose[0].keypoints 
-        if(coords.length<=100){
-            // console.log(keypoints)
-            setCoords((coords)=>[...coords,{keypoints}])
-            
-            //to be done here- measure difference and display score
-            // console.log(coords[0])
-            // console.log(coords) 
+        // console.log(keypoints["0"]["y"])
+        if(count<95){
+          computescore(keypoints)
         }
-        
-        let input = keypoints.map((keypoint) => {
+        keypoints.map((keypoint) => {
           if(keypoint.score > 0.4) {
               drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)')
               let connections = keypointConnections[keypoint.name]
@@ -120,14 +111,51 @@ function Start() {
                 
               }
           } 
-          return [keypoint.x, keypoint.y]
+          
         }) 
       } catch(err) {
         console.log(err)
-      }     
+      }   
+      
     }
+   
+    
   }
+    function computescore(userkeypoints){
+      const numbers=[0,3,4,5,6,7,8,11,12,13,14]
+      const gradients=[]
+      var score=0
+      try{
+      for(var i in numbers){
+        var conn="" 
+        var conname=""
+        conn=userkeypoints[i]["name"]  
+        console.log(conn)                                                                                  
+        Object.values(keypointConnections[conn]).forEach(val=> {
+          conname =val.toUpperCase()
+          gradients.push(calculategradient( userkeypoints[i]["y"],
+                                            userkeypoints[i]["x"],
+                                            userkeypoints[POINTS[conname]]["y"],
+                                            userkeypoints[POINTS[conname]]["x"]))
+        })
+      }
+    }catch(err){console.log(err)}
+      for(let x=0;x<gradients.length;x++){
+          score+= data[count][x]-gradients[x]
+      }
+      score=score/gradients.length
+      // console.log(score)
+      count++
+      // console.log(userkeypoints["0"])
+      //gradients to be calculated- all keypoint connections
+      
+    }
 
+    function calculategradient(y1,x1,y2,x2){
+      var gradient=0
+      gradient= (y1-y2)/(x1-x2)
+      return gradient
+    }
     function begin(){
         runMovenet()
     } 
