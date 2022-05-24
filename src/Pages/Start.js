@@ -4,6 +4,8 @@ import React, { useRef,useState,useEffect } from 'react';
 import backend from '@tensorflow/tfjs-backend-webgl';
 import Webcam from 'react-webcam';
 import ReactPlayer from 'react-player';
+import ReactLoading from "react-loading";
+import { renderMatches } from 'react-router-dom';
 
 
 
@@ -63,6 +65,7 @@ let interval
 function Start() {
   const data= require('../actualgradients.json')
   var count=0
+  const [done,setDone]=useState(false)
   const [playing, setPlaying]=useState(false);
   // const[coords,setCoords]=useState([]);
  
@@ -72,10 +75,13 @@ function Start() {
     const detectorConfig = {modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER};
     const detector = await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet, detectorConfig);
     interval = setInterval(() => { 
-      detectPose(detector)   
+      detectPose(detector)
       if(count==1){
+        setDone(true)
+      }   
+      if(count==5){
         setPlaying(true)}
-        else if (count==100){
+        else if (count>=100){
           setPlaying(false)}
     }, 100)
   }
@@ -92,9 +98,8 @@ function Start() {
       try {
         const keypoints = pose[0].keypoints 
         // console.log(keypoints["0"]["y"])
-        if(count<95){
-          computescore(keypoints)
-        }
+        if (count<100){
+        computescore(keypoints)}
         keypoints.map((keypoint) => {
           if(keypoint.score > 0.4) {
               drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)')
@@ -122,15 +127,16 @@ function Start() {
     
   }
     function computescore(userkeypoints){
+      if(playing==true){
       const numbers=[0,3,4,5,6,7,8,11,12,13,14]
       const gradients=[]
       var score=0
       try{
-      for(var i in numbers){
+      for(var i of numbers){
         var conn="" 
         var conname=""
         conn=userkeypoints[i]["name"]  
-        console.log(conn)                                                                                  
+                                                                                         
         Object.values(keypointConnections[conn]).forEach(val=> {
           conname =val.toUpperCase()
           gradients.push(calculategradient( userkeypoints[i]["y"],
@@ -144,7 +150,7 @@ function Start() {
           score+= data[count][x]-gradients[x]
       }
       score=score/gradients.length
-      // console.log(score)
+      console.log(score)}
       count++
       // console.log(userkeypoints["0"])
       //gradients to be calculated- all keypoint connections
@@ -156,10 +162,9 @@ function Start() {
       gradient= (y1-y2)/(x1-x2)
       return gradient
     }
-    function begin(){
-        runMovenet()
-    } 
-
+    
+    runMovenet()
+    
     const videoConstraints = {
         width: 760,
         height: 640
@@ -168,41 +173,47 @@ function Start() {
   
     return (
             <>
-            <button onClick={begin}>Begin</button>
-            <td><ReactPlayer
-                width='215%'
-                height='215%'
-                url='videos/dance10.mp4'
-                playing={playing}
-                muted={false}
-                style={{
-                    inline:true
-                }}
-                    /></td>
-            <td>
+            <><td><ReactPlayer
+          width='215%'
+          height='215%'
+          url='videos/dance10.mp4'
+          playing={playing}
+          muted={false}
+          style={{
+            inline: true
+          }} /></td>
+          <td>
             <Webcam
-                    videoConstraints={videoConstraints}
-                    ref={webcamRef}
-                    style={{
-                        position: 'absolute',
-                        left:650,
-                        inline:true,
-                        transform: "scaleX(-1)"
-                    }} />
+              videoConstraints={videoConstraints}
+              ref={webcamRef}
+              style={{
+                position: 'absolute',
+                left: 650,
+                inline: true,
+                transform: "scaleX(-1)"
+              }} />
             <canvas
-                    ref={canvasRef}
-                    id="my-canvas"
-                    width='760'
-                    height='640'
-                    style={{
-                        position: 'absolute',
-                        left:650,
-                        inline:true,
-                        transform: "scaleX(-1)"
-                    }}>
-                </canvas>
-            </td>
-            </>
+              ref={canvasRef}
+              id="my-canvas"
+              width='760'
+              height='640'
+              style={{
+                position: 'absolute',
+                left: 650,
+                inline: true,
+                transform: "scaleX(-1)"
+              }}>
+            </canvas>
+          </td></>  
+          {!done && <ReactLoading
+            type={"bars"}
+            color={"#03fc4e"}
+            height={100}
+            width={100}
+          /> }
+          
+      
+          </>
     )
   
 }
