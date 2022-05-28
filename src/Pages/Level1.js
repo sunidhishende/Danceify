@@ -57,6 +57,8 @@ function Level1() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const idRef = useRef(0);
 
+  var check=0
+
   // useEffect(()=>{
   //   console.log("useEffect count-"+count)
   //   if(count==1){
@@ -157,11 +159,12 @@ function Level1() {
         if (state.isPlaying){
           setScore(computescore(keypoints, state.count))} 
           console.log("scoreeee"+score)
-
-        keypoints.map((keypoint) => {
+          check++
+              if(check==1){
+              dispatch({ type: "start" })}
+          keypoints.map((keypoint) => {
           //Drawing the points and segments
           if(keypoint.score > 0.4) {
-              dispatch({ type: "start" })
               drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)')
               let connections = keypointConnections[keypoint.name]
               try {
@@ -193,14 +196,15 @@ function Level1() {
         throw new Error();
     }
   }
-    //calls movenet which basically starts the entire thing
-    runMovenet()
+  
+  //calls movenet which basically starts the entire thing
+  runMovenet()
 
     //for webcam
-    const videoConstraints = {
+  const videoConstraints = {
         width: 750,
         height: 700
-    };
+  };
   
     return (      
       <> 
