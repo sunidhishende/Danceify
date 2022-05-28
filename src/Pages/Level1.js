@@ -1,13 +1,13 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs';
-import React, { useRef,useState,useEffect } from 'react';
+import React, { useRef,useState,useEffect,useReducer } from 'react';
 import backend from '@tensorflow/tfjs-backend-webgl';
 import Webcam from 'react-webcam';
 import ReactPlayer from 'react-player';
 import styled from 'styled-components';
 import LoadingOverlay from '@ronchalant/react-loading-overlay'
 import {POINTS, keypointConnections } from '../Helper/data'
-import { drawPoint, drawSegment } from '../Helper/functions';
+import { drawPoint, drawSegment,computescore } from '../Helper/functions';
 
 //StyledComponents
 const Videocontainer= styled.div`
@@ -17,14 +17,15 @@ const Videocontainer= styled.div`
   margin: 0 ;
   position: relative;
 `
+const H3= styled.h3`
+color: white;
+`
+//colour of the body skeleton
 let skeletonColor = 'rgb(255,255,255)'
 
 let interval
 
 function Level1() {
-
-  //gradients from the dance video
-  const data= require('../Helper/data/actualgradients.json')
 
   //for downloading webcam video
   const mediaRecorderRef = React.useRef(null);
@@ -38,16 +39,49 @@ function Level1() {
   const canvasRef = useRef(null)
 
   //done is boolean for loading overlay 
-  const [done,setDone]=useState(false)
+  // const [done,setDone]=useState(false)
 
   //playing is boolean for playing the dance video
-  const [playing, setPlaying]=useState(false);
+  // const [playing, setPlaying]=useState(false);
   
   //to count the no. of keypoint objects recorded
-  var count=0 
+  
   // const [count,setCount]=useState(0);
-  // const[coords,setCoords]=useState([]);
-  var countcheck=0;
+
+  const initialState = {
+    isPlaying: false,
+    count: 0
+  };
+
+  const[detect, setDetect]= useState(false)
+  const [state, dispatch] = useReducer(reducer, initialState);
+  const idRef = useRef(0);
+
+  // useEffect(()=>{
+  //   console.log("useEffect count-"+count)
+  //   if(count==1){
+  //     setDone(true)
+  //   }   
+  //   if(count==5){
+  //     setPlaying(true)
+  //   }
+  //     else if (count>=100){
+  //       setPlaying(false)
+  //     }
+  // },[count,done,playing])
+  useEffect(() => {
+    if (!state.isPlaying) {
+      return;
+    }
+    idRef.current = setInterval(() => dispatch({ type: "increment" }), 100);
+    return () => {
+      clearInterval(idRef.current);
+      idRef.current = 0;
+    };
+  }, [state.isPlaying]);
+
+  //to display the score
+  const[score,setScore]=useState(0)
 
   //functions for downloading the video
   const handleStartCaptureClick = React.useCallback(() => {
@@ -101,18 +135,8 @@ function Level1() {
 
     //interval every 100ms for real time body tracking
     interval = setInterval(() => { 
-      countcheck=detectPose(detector)
-      // console.log(count)
-      // if(countcheck){setCount(count+1)}
-      if(count==1){
-        setDone(true)
-      }   
-      if(count==5){
-        setPlaying(true)
-      }
-        else if (count>=100){
-          setPlaying(false)
-        }
+      detectPose(detector)
+      console.log(state.count)
     }, 100)
   }
 
@@ -127,11 +151,17 @@ function Level1() {
       const pose = await detector.estimatePoses(video)
       const ctx = canvasRef.current.getContext('2d')
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+
       try {
-        const keypoints = pose[0].keypoints 
-        // console.log(keypoints["0"]["y"])
+        const keypoints = pose[0].keypoints
+        if (state.isPlaying){
+          setScore(computescore(keypoints, state.count))} 
+          console.log("scoreeee"+score)
+
         keypoints.map((keypoint) => {
+          //Drawing the points and segments
           if(keypoint.score > 0.4) {
+              dispatch({ type: "start" })
               drawPoint(ctx, keypoint.x, keypoint.y, 8, 'rgb(255,255,255)')
               let connections = keypointConnections[keypoint.name]
               try {
@@ -142,64 +172,27 @@ function Level1() {
                        keypoints[POINTS[conName]].y]
                   , skeletonColor)
                 })
-              } catch(err) {
-                
-              }
-          } 
-          
-        }) 
-        if (count<100){
-          computescore(keypoints)} 
-
-        return [keypoints["0"]["y"]] 
+              } catch(err) {}
+          }  
+        });
       } catch(err) {
         console.log(err)
       }   
-      
-    }
-   
-  
+    } 
   }
 
-  //computing the score which is abs(difference of gradients average)
-    function computescore(userkeypoints){
-      const numbers=[0,3,4,5,6,7,8,11,12,13,14]
-      const gradients=[]
-      var score=0
-      try{
-      for(var i of numbers){
-        var conn="" 
-        var conname=""
-        conn=userkeypoints[i]["name"]  
-                                                                                         
-        Object.values(keypointConnections[conn]).forEach(val=> {
-          conname =val.toUpperCase()
-          gradients.push(calculategradient( userkeypoints[i]["y"],
-                                            userkeypoints[i]["x"],
-                                            userkeypoints[POINTS[conname]]["y"],
-                                            userkeypoints[POINTS[conname]]["x"]))
-        })
-      }
-    }catch(err){console.log(err)}
-      for(let x=0;x<gradients.length;x++){
-          score+= Math.abs(data[count][x]-gradients[x])
-      }
-      score=score/gradients.length
-      console.log(score)
-      count++
-      // console.log("helloooo"+count)
-      // setCount(count+1)
-      // console.log(userkeypoints["0"])
-      //gradients to be calculated- all keypoint connections
+  function reducer(state, action) {
+    switch (action.type) {
+      case "start":
+        return { ...state, isPlaying: true };
+      case "stop":
+        return { ...state, isPlaying: false };
+      case "increment":
+        return { ...state, count: state.count + 1 };
+      default:
+        throw new Error();
     }
-
-    //gradient calculator
-    function calculategradient(y1,x1,y2,x2){
-      var gradient=0
-      gradient= (y1-y2)/(x1-x2)
-      return gradient
-    }
-    
+  }
     //calls movenet which basically starts the entire thing
     runMovenet()
 
@@ -212,7 +205,7 @@ function Level1() {
     return (      
       <> 
       <LoadingOverlay
-        active={!done}
+        active={!state.isPlaying}
         spinner
         text='Dance like no one is watching!'>
         <div style={{display:'flex', width:'100%'}}>
@@ -220,7 +213,8 @@ function Level1() {
           width="100%"
           height={videoConstraints.height}
           url='videos/dance10.mp4'
-          playing={playing}
+          playing={state.isPlaying}
+          onEnded={() => dispatch({ type: "stop" })}
           muted={false}
            /></Videocontainer>
            <Videocontainer>
@@ -246,6 +240,7 @@ function Level1() {
                </canvas>
                </Videocontainer>
                </div>
+               <H3>{score}</H3>
           {capturing ? (
         <button onClick={handleStopCaptureClick}>Stop Capture</button>
       ) : (

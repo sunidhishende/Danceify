@@ -1,0 +1,1 @@
+//padangusthasana/uttanasana, anjaneyasan, baddha konasana,janu sirsasan
