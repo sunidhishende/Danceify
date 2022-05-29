@@ -183,7 +183,6 @@ function Level1() {
       try {
         const keypoints = pose[0].keypoints
         if (bool){
-          console.log("HIIIIIIIII")
           var score = computescore(keypoints, state.count,data)
           var modifiedScore = 1000 - score
           totalScore += score;
@@ -222,14 +221,11 @@ function Level1() {
   function reducer(state, action) {
     switch (action.type) {
       case "start": {
-        console.log("STARTING...!!!!")
         return { ...state, isPlaying: true };
       }
       case "stop":
-        console.log("STOPPING...!!!!")
         return { ...state, isPlaying: false };
       case "increment": {
-        console.log("BEFORE COUNT INCREMENT:"+JSON.stringify(state));
         return { ...state, count: state.count + 1 };
       }
       default:

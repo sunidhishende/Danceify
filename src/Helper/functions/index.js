@@ -17,7 +17,6 @@ export function drawSegment(ctx, [mx, my], [tx, ty], color) {
 }
 
 //computing the score which is abs(difference of gradients average)
-//gradients from the dance video
 
 var arr = []
 var scores = []
@@ -44,16 +43,11 @@ export function computescore(userkeypoints, count, data) {
     } catch (err) { console.log(err) }
     arr.push(gradients)
     console.log(arr)
-        // Adding all differences of gradients and then taking their average
+        // Adding all differences of gradients
     for (let x = 0; x < gradients.length; x++) {
         scorecalc += Math.abs(data[count][x] - gradients[x])
     }
-    // scorecalc = (scorecalc / gradients.length)
-        // setCount(c=>c+1)
-        // console.log("set count-"+ count)
     scores.push(scorecalc)
-        console.log("scoress" +
-            scores)
     return scorecalc
 
 }
