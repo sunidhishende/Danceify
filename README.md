@@ -42,7 +42,6 @@ The gradients in the dance video are pre-calculated and are compared to the grad
 ## Challenges Faced and Learnings
 1. Being new to Machine Learning, it was very interesting and fun to understand the basics and read a lot of research papers and documentation.
 2. One of the biggest challenges was to display the score real time and sync it with the video. I commited plenty of mistakes, but learnt that whenever in doubt go back to the docs. 
-3. 
 
 ## Future Scope
 I'm very excited about this project and will continue building it. Some of the features I'd like to implement are:
