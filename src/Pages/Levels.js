@@ -44,12 +44,18 @@ function Levels() {
     return ( 
         <div>  
         <Box>
-        <Link to = '/level1' > 
+        <Link to = '/level/1' > 
         <Buttonodd>Level 1</Buttonodd>
         </Link >
+        <Link to = '/level/2' > 
         <Buttoneven>Level 2</Buttoneven>
+        </Link >
+        <Link to = '/level/3' > 
         <Buttonodd>Level 3</Buttonodd>
+        </Link >
+        <Link to = '/level/4' > 
         <Buttoneven>Level 4</Buttoneven>
+        </Link >
         </Box>
         </div>
     )

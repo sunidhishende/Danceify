@@ -10,7 +10,7 @@ function App() {
     <Router>
       <Routes>
         <Route path='/' element={<Home />}/>
-        <Route path='/level1' element={<Level1 />} />
+        <Route path='/level/:id' element={<Level1 />} />
         <Route path='/levels' element={<Levels />} />
       </Routes>
     </Router>

@@ -1,6 +1,7 @@
 import * as poseDetection from '@tensorflow-models/pose-detection';
 import * as tf from '@tensorflow/tfjs';
 import React, { useRef,useState,useEffect,useReducer } from 'react';
+import { useLocation } from 'react-router-dom';
 import backend from '@tensorflow/tfjs-backend-webgl';
 import Webcam from 'react-webcam';
 import ReactPlayer from 'react-player';
@@ -8,6 +9,7 @@ import styled from 'styled-components';
 import LoadingOverlay from '@ronchalant/react-loading-overlay'
 import {POINTS, keypointConnections } from '../Helper/data'
 import { drawPoint, drawSegment,computescore } from '../Helper/functions';
+
 
 //StyledComponents
 const Videocontainer= styled.div`
@@ -20,6 +22,31 @@ const Videocontainer= styled.div`
 const H3= styled.h3`
 color: white;
 `
+const Button= styled.button`
+background-color: #d0d8fa;
+border: none;
+color: black;
+padding: 15px 100px;
+text-align: center;
+font-size: 25px;
+text-decoration: none;
+display: inline-block;
+margin: 20px ;
+cursor: pointer;
+border-radius: 200px;`
+
+const H1= styled.h1`
+background: #FFFFFF;
+background: linear-gradient(to right, #FFFFFF 0%, #838FFF 90%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;   
+font-weight: 400;
+font-size: 70px;
+font-family: Iceland;
+margin: 0px 0px 0px 0px;
+text-align: center;
+`
+
 //colour of the body skeleton
 let skeletonColor = 'rgb(255,255,255)'
 
@@ -29,10 +56,14 @@ const initialState = {
   isPlaying: false,
   count: 0
 };
-const data = require('../Helper/data/actualgradients.json')
-const totalPoints = Object.keys(data).length;
+
 
 function Level1() {
+  const location=useLocation();
+  var level= location.pathname.split("/")[2];
+  level=level.toString();
+  const data = require(`../Helper/data/actualgradients${level}.json`)
+  const totalPoints = Object.keys(data).length;
 
   //for downloading webcam video
   const mediaRecorderRef = React.useRef(null);
@@ -167,7 +198,7 @@ function Level1() {
         const keypoints = pose[0].keypoints
         if (state.isPlaying){
           // console.log("Points:"+totalPoints+" State:"+JSON.stringify(state));
-          setScore(computescore(keypoints, state.count))} 
+          setScore(computescore(keypoints, state.count,data))} 
           // console.log("scoreeee"+score)
           check++;
           console.log("CHECK KA VALUE:"+check);
@@ -238,22 +269,28 @@ function Level1() {
   };
   
 
-  const vidurl='videos/dance10.mp4'
+  const vidurl=`/videos/dance${level}.mp4`
+
+
     return (      
       <> 
       <LoadingOverlay
         active={!state.isPlaying}
         spinner
         text='Dance like no one is watching!'>
+          <H1>{"Level "+level}</H1>
         <div style={{display:'flex', width:'100%'}}>
-        <Videocontainer> <ReactPlayer
+        <Videocontainer>
+        <ReactPlayer
           width="100%"
           height={videoConstraints.height}
           url={vidurl}
           playing={state.isPlaying}
           // onEnded={() => dispatch({ type: "stop" })}
           muted={false}
-           /></Videocontainer>
+           />
+          
+        </Videocontainer>
            <Videocontainer>
           <Webcam 
               videoConstraints={videoConstraints}
@@ -279,12 +316,12 @@ function Level1() {
                </div>
                <H3>{score}</H3>
           {capturing ? (
-        <button onClick={handleStopCaptureClick}>Stop Capture</button>
+        <Button onClick={handleStopCaptureClick}>Stop Capture</Button>
       ) : (
-        <button onClick={handleStartCaptureClick}>Start Capture</button>
+        <Button onClick={handleStartCaptureClick}>Start Capture</Button>
       )}
           {recordedChunks.length > 0 && (
-        <button onClick={handleDownload}>Download</button>
+        <Button onClick={handleDownload}>Download</Button>
       )}
           </LoadingOverlay>
           
