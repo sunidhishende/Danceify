@@ -10,6 +10,8 @@ import LoadingOverlay from '@ronchalant/react-loading-overlay'
 import {POINTS, keypointConnections } from '../Helper/data'
 import { drawPoint, drawSegment,computescore } from '../Helper/functions';
 import styledComponents from 'styled-components';
+import Modal from 'react-overlays/Modal';
+import Plot from 'react-plotly.js';
 
 
 //StyledComponents
@@ -22,15 +24,16 @@ const Videocontainer= styled.div`
 `
 const H3= styled.h3`
 color: white;
+font-size:25px;
 
 `
 const Button= styled.button`
 background-color: #d0d8fa;
 border: none;
 color: black;
-padding: 15px 100px;
+padding: 10px 50px;
 text-align: center;
-font-size: 25px;
+font-size: 20px;
 text-decoration: none;
 display: inline-block;
 margin: 20px ;
@@ -59,6 +62,10 @@ const initialState = {
   count: 0
 };
 
+var bool=false
+var y_points = []
+var x_points = []
+var totalScore = 0;
 function Level1() {
   const location=useLocation();
   var level= location.pathname.split("/")[2];
@@ -90,11 +97,16 @@ function Level1() {
   const [state, dispatch] = useReducer(reducer, initialState);
   const idRef = useRef(0);
 
+  
+
   useEffect(() => {
     if (!state.isPlaying) {
       return;
     }
     idRef.current = setInterval(() => dispatch({ type: "increment" }), 100);
+    console.log("before set bool:"+bool);
+    bool=true
+    console.log("after set bool:"+bool);
     return () => {
       clearInterval(idRef.current);
       idRef.current = 0;
@@ -170,9 +182,14 @@ function Level1() {
 
       try {
         const keypoints = pose[0].keypoints
-        if (state.isPlaying){
+        if (bool){
           console.log("HIIIIIIIII")
-          setScore(computescore(keypoints, state.count,data))} 
+          var score = computescore(keypoints, state.count,data)
+          var modifiedScore = 1000 - score
+          totalScore += modifiedScore;
+          setScore(score)
+          y_points.push(modifiedScore)
+        } 
           check++;
           if(check==1){
             dispatch({ type: "start" });
@@ -233,15 +250,70 @@ function Level1() {
     dispatch({ type: "stop" })
     const ctx = canvasRef.current.getContext('2d')
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-    handleStopCaptureClick()    
+    handleStopCaptureClick()  
+    for(let x = 0; x < y_points.length; x++){
+      x_points.push(x)
+  } 
+    setShow(true) 
   }
+
+const Backdrop = styled("div")`
+  position: fixed;
+  z-index: 1040;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #000;
+  opacity: 0.5;
+`;
+
+
+const RandomlyPositionedModal = styled(Modal)`
+  position: fixed;
+  width: 500px;
+  z-index: 1040;
+  top: 25%;
+  left: 30%;
+  border: 1px solid #e5e5e5;
+  background-color: white;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+  padding: 20px;
+`;
+
+  const [show, setShow] = useState(false);
+
+  const renderBackdrop = (props) => <Backdrop {...props} />;
 
     return (      
       <> 
       <LoadingOverlay
         active={(!state.isPlaying)&&(!over)}
         spinner
-        text='Dance like no one is watching!'>
+        text='Dance like no one is watching!'
+        >
+        <RandomlyPositionedModal
+        show={show}
+        onHide={() => setShow(false)}
+        renderBackdrop={renderBackdrop}
+        aria-labelledby="modal-label"
+      >
+        <div>
+        <H3 style={{color:"black"}}>Total score: {totalScore}</H3>
+        <Plot
+        data={[
+          {
+            x: x_points,
+            y: y_points,
+            type: 'scatter',
+            marker: {color: 'red'},
+          },
+        ]}
+        layout={{width: 500, height: 500, title: 'Performance!'}}
+      />
+      
+        </div>
+      </RandomlyPositionedModal>
         <H1>{"Level "+level}</H1>
         <div style={{display:'flex', width:'100%'}}>
         {over&&<Button onClick={startMovenet}>Start Level</Button>}
