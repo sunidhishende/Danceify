@@ -104,9 +104,9 @@ function Level1() {
       return;
     }
     idRef.current = setInterval(() => dispatch({ type: "increment" }), 100);
-    console.log("before set bool:"+bool);
+    
     bool=true
-    console.log("after set bool:"+bool);
+   
     return () => {
       clearInterval(idRef.current);
       idRef.current = 0;

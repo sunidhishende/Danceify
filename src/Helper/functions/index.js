@@ -22,7 +22,7 @@ export function drawSegment(ctx, [mx, my], [tx, ty], color) {
     //the points which have connections
 const numbers = [0, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14]
 export function computescore(userkeypoints, count, data) {
-    console.log(userkeypoints)
+    
     
     const gradients = []
     var scorecalc = 0
