@@ -9,6 +9,7 @@ import styled from 'styled-components';
 import LoadingOverlay from '@ronchalant/react-loading-overlay'
 import {POINTS, keypointConnections } from '../Helper/data'
 import { drawPoint, drawSegment,computescore } from '../Helper/functions';
+import styledComponents from 'styled-components';
 
 
 //StyledComponents
@@ -21,6 +22,7 @@ const Videocontainer= styled.div`
 `
 const H3= styled.h3`
 color: white;
+
 `
 const Button= styled.button`
 background-color: #d0d8fa;
@@ -57,13 +59,18 @@ const initialState = {
   count: 0
 };
 
-
 function Level1() {
   const location=useLocation();
   var level= location.pathname.split("/")[2];
   level=level.toString();
   const data = require(`../Helper/data/actualgradients${level}.json`)
-  const totalPoints = Object.keys(data).length;
+  const vidurl=`/videos/dance${level}.mp4`
+
+  //for webcam
+  const videoConstraints = {
+    width: 750,
+    height: 700
+  };
 
   //for downloading webcam video
   const mediaRecorderRef = React.useRef(null);
@@ -75,33 +82,14 @@ function Level1() {
   //canvas is where body skeleton is displayed
   const canvasRef = useRef(null)
 
-  //done is boolean for loading overlay 
-  // const [done,setDone]=useState(false)
+  //to display the score
+  const[score,setScore]=useState(0)
 
-  //playing is boolean for playing the dance video
-  // const [playing, setPlaying]=useState(false);
-  
-  //to count the no. of keypoint objects recorded
-  
-  // const [count,setCount]=useState(0);
+  const[over,setOver]=useState(true)
 
-  const[detect, setDetect]= useState(false)
   const [state, dispatch] = useReducer(reducer, initialState);
   const idRef = useRef(0);
-  console.log("HAHAHAHAHAHAHA");
 
-  // useEffect(()=>{
-  //   console.log("useEffect count-"+count)
-  //   if(count==1){
-  //     setDone(true)
-  //   }   
-  //   if(count==5){
-  //     setPlaying(true)
-  //   }
-  //     else if (count>=100){
-  //       setPlaying(false)
-  //     }
-  // },[count,done,playing])
   useEffect(() => {
     if (!state.isPlaying) {
       return;
@@ -112,9 +100,6 @@ function Level1() {
       idRef.current = 0;
     };
   }, [state.isPlaying]);
-
-  //to display the score
-  const[score,setScore]=useState(0)
 
   //functions for downloading the video
   const handleStartCaptureClick = React.useCallback(() => {
@@ -169,17 +154,6 @@ function Level1() {
     //interval every 100ms for real time body tracking
     interval = setInterval(() => { 
       detectPose(detector)
-      // try {
-      //   if(state.count > totalPoints){
-      //     console.log("CONDITION CHALA BHI KYAAAAAAAAAAAAAAa")
-      //     clearInterval(interval);
-      //     dispatch({ type: "stop" });
-      //   }
-      // }catch{
-      //   console.log("WHATTTTTTTTTTTTTT")
-      // }
-      console.log("LMAOOOOOOOOOOOOOOOOOOOOOOOOOO STATE IS:"+JSON.stringify(state));
-      // console.log(state.count)
     }, 100)
   }
   //estimate poses detects keypoints and then points, segments are drawn
@@ -197,16 +171,13 @@ function Level1() {
       try {
         const keypoints = pose[0].keypoints
         if (state.isPlaying){
-          // console.log("Points:"+totalPoints+" State:"+JSON.stringify(state));
           setScore(computescore(keypoints, state.count,data))} 
-          // console.log("scoreeee"+score)
           check++;
-          console.log("CHECK KA VALUE:"+check);
           if(check==1){
-            console.log("GAVE A START SIGNAL");
             dispatch({ type: "start" });
             check++;
           }
+
           keypoints.map((keypoint) => {
           //Drawing the points and segments
           if(keypoint.score > 0.4) {
@@ -223,6 +194,7 @@ function Level1() {
               } catch(err) {}
           }  
         });
+
       } catch(err) {
         console.log(err)
       }   
@@ -240,18 +212,6 @@ function Level1() {
         return { ...state, isPlaying: false };
       case "increment": {
         console.log("BEFORE COUNT INCREMENT:"+JSON.stringify(state));
-        try {
-          console.log("BEFORE STOP CHECK: Points:"+totalPoints+" Count:"+state.count);
-
-          if(state.count > totalPoints){
-            console.log("STOP CONDITION TRIGGERED: Points:"+totalPoints+" Count:"+state.count);
-            // console.log("INTERVAL KA VALUE DEKHO:"+interval);
-            clearInterval(interval);
-            return {...state, isPlaying: false};
-          }
-        }catch{
-          console.log("WHATTTTTTTTTTTTTT")
-        }
         return { ...state, count: state.count + 1 };
       }
       default:
@@ -260,25 +220,36 @@ function Level1() {
   }
   
   //calls movenet which basically starts the entire thing
-  runMovenet()
+  function startMovenet(){
+    setOver(false)
+    runMovenet()
+    handleStartCaptureClick()
+  }
 
-    //for webcam
-  const videoConstraints = {
-        width: 750,
-        height: 700
-  };
-  
-
-  const vidurl=`/videos/dance${level}.mp4`
-
+  function stopMovenet(){
+    setOver(true)
+    clearInterval(interval) 
+    dispatch({ type: "stop" })
+    const ctx = canvasRef.current.getContext('2d')
+    ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+    handleStopCaptureClick()    
+  }
 
     return (      
       <> 
       <LoadingOverlay
-        active={!state.isPlaying}
+        active={(!state.isPlaying)&&(!over)}
         spinner
         text='Dance like no one is watching!'>
-          <H1>{"Level "+level}</H1>
+        <H1>{"Level "+level}</H1>
+        <div style={{display:'flex', width:'100%'}}>
+        {over&&<Button onClick={startMovenet}>Start Level</Button>}
+        {!over&&<Button onClick={stopMovenet}>Stop Level</Button>}
+        <H3>Score:{score}</H3>
+        {recordedChunks.length > 0 && (
+        <Button onClick={handleDownload}>Download</Button>
+      )}
+        </div>
         <div style={{display:'flex', width:'100%'}}>
         <Videocontainer>
         <ReactPlayer
@@ -286,7 +257,7 @@ function Level1() {
           height={videoConstraints.height}
           url={vidurl}
           playing={state.isPlaying}
-          // onEnded={() => dispatch({ type: "stop" })}
+          onEnded={stopMovenet}
           muted={false}
            />
           
@@ -314,20 +285,9 @@ function Level1() {
                </canvas>
                </Videocontainer>
                </div>
-               <H3>{score}</H3>
-          {capturing ? (
-        <Button onClick={handleStopCaptureClick}>Stop Capture</Button>
-      ) : (
-        <Button onClick={handleStartCaptureClick}>Start Capture</Button>
-      )}
-          {recordedChunks.length > 0 && (
-        <Button onClick={handleDownload}>Download</Button>
-      )}
-          </LoadingOverlay>
-          
+          </LoadingOverlay>  
       </>
     )
-  
 }
 
 export default Level1
