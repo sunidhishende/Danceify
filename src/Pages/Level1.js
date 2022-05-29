@@ -171,6 +171,7 @@ function Level1() {
       try {
         const keypoints = pose[0].keypoints
         if (state.isPlaying){
+          console.log("HIIIIIIIII")
           setScore(computescore(keypoints, state.count,data))} 
           check++;
           if(check==1){
@@ -244,7 +245,6 @@ function Level1() {
         <H1>{"Level "+level}</H1>
         <div style={{display:'flex', width:'100%'}}>
         {over&&<Button onClick={startMovenet}>Start Level</Button>}
-        {!over&&<Button onClick={stopMovenet}>Stop Level</Button>}
         <H3>Score:{score}</H3>
         {recordedChunks.length > 0 && (
         <Button onClick={handleDownload}>Download</Button>
