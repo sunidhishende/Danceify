@@ -29,11 +29,11 @@ For calculating the score, I have used the method of gradients (calculating the 
 The gradients in the dance video are pre-calculated and are compared to the gradients of the user in real time. 
 
 ## Demonstration
-![home page]()
-![levels page]()
-![level1]()
-![graph]()
-![download button]()
+![home page](https://github.com/sunidhishende/Danceify/blob/newest/public/images/homepage.png)
+![levels page](https://github.com/sunidhishende/Danceify/blob/newest/public/images/levels.png)
+![level1](https://github.com/sunidhishende/Danceify/blob/newest/public/images/level1.png)
+![graph](https://github.com/sunidhishende/Danceify/blob/newest/public/images/graph.png)
+![download button](https://github.com/sunidhishende/Danceify/blob/newest/public/images/download.png)
 
 ## Technologies used
 1. React
