@@ -186,7 +186,7 @@ function Level1() {
           console.log("HIIIIIIIII")
           var score = computescore(keypoints, state.count,data)
           var modifiedScore = 1000 - score
-          totalScore += modifiedScore;
+          totalScore += score;
           setScore(score)
           y_points.push(modifiedScore)
         } 
@@ -247,6 +247,7 @@ function Level1() {
   function stopMovenet(){
     setOver(true)
     clearInterval(interval) 
+    console.log(totalScore);
     dispatch({ type: "stop" })
     const ctx = canvasRef.current.getContext('2d')
     ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
@@ -255,6 +256,16 @@ function Level1() {
       x_points.push(x)
   } 
     setShow(true) 
+  }
+
+  function getFeedback(totalScore){
+    if(totalScore < 50000){
+      return "Well done! You can move on to the next level"
+    }else if(totalScore < 80000){
+      return "Not bad. You still need more practice on this level."
+    }else{
+      return "Poor performance. Keep practicing or level down."
+    }
   }
 
 const Backdrop = styled("div")`
@@ -299,7 +310,7 @@ const RandomlyPositionedModal = styled(Modal)`
         aria-labelledby="modal-label"
       >
         <div>
-        <H3 style={{color:"black"}}>Total score: {totalScore}</H3>
+        <H3 style={{color:"black"}}>Result: {getFeedback(totalScore)}</H3>
         <Plot
         data={[
           {

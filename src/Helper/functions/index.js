@@ -48,7 +48,7 @@ export function computescore(userkeypoints, count, data) {
     for (let x = 0; x < gradients.length; x++) {
         scorecalc += Math.abs(data[count][x] - gradients[x])
     }
-    scorecalc = (scorecalc / gradients.length)
+    // scorecalc = (scorecalc / gradients.length)
         // setCount(c=>c+1)
         // console.log("set count-"+ count)
     scores.push(scorecalc)
